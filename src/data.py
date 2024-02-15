@@ -1,9 +1,13 @@
+import json
 import os
 from xml.etree import ElementTree
 
 import numpy as np
 from PIL import Image as PILImage
 from pydantic import BaseModel
+
+with open("data/classes.json") as file:
+    CLASSES: dict[str, int] = json.load(file)
 
 
 class BoundingBox(BaseModel):
@@ -15,6 +19,7 @@ class BoundingBox(BaseModel):
 
 class Object(BaseModel):
     name: str
+    class_map: int
     bounding_box: BoundingBox
 
 
@@ -53,7 +58,10 @@ def create_image(filepath: str) -> Image:
             xmax=int(bndbox.find("xmax").text),
             ymax=int(bndbox.find("ymax").text),
         )
-        objects.append(Object(name=name, bounding_box=bbox))
+        class_map = CLASSES[name]
+        objects.append(
+            Object(name=name, class_map=class_map, bounding_box=bbox)
+        )
 
     return Image(
         folder=root.find("folder").text,

@@ -1,17 +1,16 @@
 from PIL import ImageDraw
 
 from src.data import create_images
-
 from src.model import train, predict
 
-version = 4
+version = 1
 filename = f"model_v{version}"
 
-train(filename, batch_size=50, num_epochs=10, count=1000)
+train(filename, batch_size=64, num_epochs=1, count=None)
 
 images = create_images()
 
-for index, image in enumerate(images[:10]):
+for index, image in enumerate(images[-10:]):
     pil_image = image.get_pil_image()
 
     draw = ImageDraw.Draw(pil_image)

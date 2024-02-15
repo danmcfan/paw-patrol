@@ -64,7 +64,10 @@ def get_model(num_classes: int):
 
 
 def train(
-    filename: str, batch_size: int = 2, num_epochs: int = 10, count: int = 100
+    filename: str,
+    batch_size: int = 16,
+    num_epochs: int = 10,
+    count: int | None = None,
 ):
     num_classes = 2
     model = get_model(num_classes)
@@ -76,8 +79,14 @@ def train(
     )
     model.to(device)
 
-    images = create_images()[:count]
-    dataset = ImageDataset(images)
+    images = create_images()
+
+    if count is None or count > len(images):
+        count = len(images)
+
+    images = images[:count]
+
+    train_dataset = ImageDataset(images)
 
     def collate_fn(batch):
         images = [item["image"] for item in batch]
@@ -86,12 +95,14 @@ def train(
             for item in batch
         ]
 
-        # Use default_collate to handle images which can be batched normally
         images = default_collate(images)
         return images, targets
 
     data_loader = DataLoader(
-        dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
     )
 
     optimizer = torch.optim.SGD(
@@ -103,7 +114,7 @@ def train(
         for batch, (images, targets) in enumerate(data_loader):
             print(f"    Batch {batch + 1}/{len(data_loader)}")
 
-            images = list(img.to(device) for img in images)
+            images = images.to(device)
             targets = [
                 {k: v.to(device) for k, v in t.items()} for t in targets
             ]
@@ -117,7 +128,6 @@ def train(
 
             print(f"        Loss: {losses.item()}")
 
-    # save model to file
     torch.save(model.state_dict(), f"data/models/{filename}.pth")
 
 
